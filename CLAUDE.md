@@ -175,11 +175,14 @@ resolver o nome da tabela audit.
 
 ### `adm.contas` — o tenant
 
-Uma conta é uma empresa privada cadastrada via autoatendimento: `cnpj`, `razao_social`,
-`nome_fantasia`, `email_contato`, `telefone`, `status` (`trial`/`ativo`/`suspenso`/
-`cancelado`), `trial_expira_em`. CNPJ validado com dígito verificador via
-`adm.func_valida_cnpj()` (idem `adm.usuarios.cpf` via `adm.func_valida_cpf()`) — ambas
-portadas do schema `comum` do Sigein, pois são autocontidas e os CHECKs dependem delas.
+Uma conta é uma empresa ou pessoa física cadastrada via autoatendimento: `tipo_pessoa`
+(`fisica`/`juridica`), `cnpj`, `cpf`, `nome`, `nome_fantasia`, `email_contato`, `telefone`,
+`status` (`trial`/`ativo`/`suspenso`/`cancelado`), `trial_expira_em`. `nome` guarda a razão
+social (PJ) ou o nome completo (PF). `contas_tipo_pessoa_chk` garante, a nível de banco,
+que só o documento correspondente ao `tipo_pessoa` esteja preenchido (jurídica exige
+`cnpj` e proíbe `cpf`, física exige `cpf` e proíbe `cnpj`). CNPJ/CPF validados com dígito
+verificador via `adm.func_valida_cnpj()`/`adm.func_valida_cpf()` — ambas portadas do
+schema `comum` do Sigein, pois são autocontidas e os CHECKs dependem delas.
 
 ### Habilitação de módulo → grupos de permissão automáticos
 
@@ -190,17 +193,11 @@ módulos, sem módulo 1), e vincula automaticamente os usuários administradores
 Módulo `1` (Administração) é seed obrigatório desta migration inicial — outras regras de
 negócio (`adm.trg_usuarios_bu`) assumem que ele existe.
 
-### `adm.usuarios` é escopado por conta
+### `adm.usuarios` é global
 
-Um usuário pertence a exatamente uma conta (`adm.usuarios.conta_id`, `not null references
-adm.contas`). `login`, `email` e `cpf` são únicos **por conta**, não globalmente — duas
-contas diferentes podem cada uma ter seu próprio usuário `admin`. Isso significa que
-`usuario_login` sozinho não identifica mais um usuário: sempre usar `(conta_id, login)`
-junto. Por isso `adm.grupos_permissoes_usuarios` carrega `conta_id` redundante (derivável
-tanto de `grupo_permissao_id` quanto de `usuario_login`), sustentando duas FKs compostas
-que impedem, a nível de banco, vincular um usuário a um grupo de permissão de outra
-conta. Não há suporte nativo a "um usuário administrando várias contas" (ex.: contador
-multi-cliente) — cada conta tem seus próprios usuários independentes.
+Não é escopado a uma única conta — o vínculo é indireto via
+`adm.grupos_permissoes_usuarios -> adm.grupos_permissoes.conta_id`, o que já suporta, sem
+custo extra, um contador/consultor administrando várias contas de clientes diferentes.
 
 ---
 
