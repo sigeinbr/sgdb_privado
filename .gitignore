@@ -1,0 +1,6 @@
+# IDEs
+.dbeaver
+.project
+.vscode/*
+.idea
+Scripts/Script*

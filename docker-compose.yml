@@ -1,0 +1,21 @@
+services:
+  flyway:
+    image: flyway/flyway
+    container_name: flyway-target
+    environment:
+      - FLYWAY_USER=${DB_DBA_USERNAME}
+      - FLYWAY_PASSWORD=${DB_DBA_PASSWORD}
+      - FLYWAY_URL=jdbc:postgresql://postgres-sigein:5432/${DB_DATABASE}
+    env_file:
+      - .env
+    volumes:
+      - $PWD/Scripts:/Scripts
+      - ./run.sh:/run.sh
+    entrypoint: ["/run.sh"]
+    networks:
+      - sigein
+    command: -locations=filesystem:/Scripts -connectRetries=3 migrate
+
+networks:
+  sigein:
+    external: true

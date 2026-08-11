@@ -1,0 +1,11 @@
+# Usa a imagem oficial do Flyway
+FROM flyway/flyway:latest
+
+# Copia os scripts SQL para dentro da imagem
+COPY Scripts /Scripts
+
+# Copia o script de execução
+COPY run.sh /run.sh
+RUN chmod +x /run.sh
+
+ENTRYPOINT ["/run.sh"]
