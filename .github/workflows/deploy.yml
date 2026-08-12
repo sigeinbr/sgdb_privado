@@ -36,7 +36,8 @@ jobs:
         with:
           context: .
           file: Dockerfile.flyway
-          platforms: linux/amd64,linux/arm64
+          # platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: ghcr.io/sigeinbr/flyway-target:latest
           cache-from: type=gha
