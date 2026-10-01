@@ -27,7 +27,7 @@ for desenvolvido.
 ```bash
 docker exec postgres-sigein psql -U sgidba -d target -c "SEU SQL"
 # Sessão interativa:
-docker exec -it postgres-target psql -U sgidba -d target
+docker exec -it postgres-sigein psql -U sgidba -d target
 ```
 
 ### Aplicar migrations (Flyway)
@@ -199,6 +199,14 @@ Não é escopado a uma única conta — o vínculo é indireto via
 `adm.grupos_permissoes_usuarios -> adm.grupos_permissoes.conta_id`, o que já suporta, sem
 custo extra, um contador/consultor administrando várias contas de clientes diferentes.
 
+`adm.trg_usuarios_bu` (trigger `usuarios_bu`) cuida só de integridade: login imutável,
+proíbe logins `sgitec%`, zera `is_verificado`/`whatsapp_verificado` ao trocar
+e-mail/telefone e impede excluir usuário com grupos de permissão vinculados. **Não** faz
+controle de "quem pode editar quem" — a regra herdada do Sigein (só administrador de todas
+as contas do usuário podia editá-lo) foi removida; autorização é responsabilidade da
+aplicação. `adm.usuarios.telefone` é único (`usuarios_telefone_ukey`, índice parcial) e
+guardado só com dígitos, DDD + número, sem DDI.
+
 ---
 
 ## Roles e permissões
@@ -244,9 +252,18 @@ por banco, então não colidem com o banco `sigein`. Roles de cluster (`sgidba`,
 migration inicial só cria o que ainda não existir.
 
 `docker-compose.yml` sobe um único serviço, `flyway-target`, que entra na rede externa
-`sigein` e aplica `Scripts/` contra `postgres-sigein:5432/target`. Encoding do banco
-`target` é UTF-8 (independente do banco `sigein`, que usa WIN1252/C por herança
-histórica).
+`sigein` e aplica `Scripts/` contra `postgres-sigein:5432/target`.
+
+**Encoding do banco `target`: WIN1252, collation/ctype `C`** — o mesmo do banco `sigein`.
+Consequências:
+- Scripts de migration só podem conter caracteres representáveis em WIN1252. Acentos do
+  português e `—`/`–` funcionam; setas (`→`), emojis, caracteres de desenho de caixa e
+  outros símbolos Unicode fora do WIN1252 fazem a migration falhar com
+  `character with byte sequence ... has no equivalent in encoding "WIN1252"` — **inclusive
+  dentro de comentários** (o corpo de functions e o texto do script vão ao servidor). Use
+  `->` no lugar de `→`.
+- Dados vindos de fora (ex.: texto de mensagens do WhatsApp) precisam ser sanitizados
+  pela aplicação antes do INSERT; um emoji derruba a transação inteira.
 
 **Pré-requisito manual (uma vez só, antes do primeiro `docker compose up`):** o Flyway não
 cria bancos de dados, só schemas dentro de um banco já existente. Criar o banco `target`
@@ -254,7 +271,7 @@ manualmente:
 
 ```bash
 docker exec postgres-sigein psql -U sgidba -d postgres -c \
-  "create database target encoding 'UTF8' template template0;"
+  "create database target encoding 'WIN1252' lc_collate 'C' lc_ctype 'C' template template0;"
 ```
 
 ## CI/CD
