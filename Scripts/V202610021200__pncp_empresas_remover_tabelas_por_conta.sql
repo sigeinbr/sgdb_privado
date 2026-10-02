@@ -14,7 +14,7 @@
 
 /******************************************************************************************
  * Trava: a aplicação precisa ter parado de escrever nas tabelas antigas. Qualquer escrita
- * auditada nelas nas últimas 24 horas aborta a migration (e o deploy) — sinal de que ainda
+ * auditada nelas nas últimas 2 horas aborta a migration (e o deploy) — sinal de que ainda
  * há versão antiga da aplicação ou do job rodando, ou de que o deploy é recente demais para
  * estar validado.
  */
@@ -31,8 +31,8 @@ begin
       select dh_audit from audit.pncp_mencoes_notificacoes_enviadas
     ) escritas;
 
-  if v_ultima_escrita > current_timestamp - interval '24 hours' then
-    raise exception 'Tabelas por conta ainda receberam escrita em % (menos de 24h). A aplicação parou de usá-las?', v_ultima_escrita;
+  if v_ultima_escrita > current_timestamp - interval '2 hours' then
+    raise exception 'Tabelas por conta ainda receberam escrita em % (menos de 2 horas). A aplicação parou de usá-las?', v_ultima_escrita;
   end if;
 end;
 $$;
