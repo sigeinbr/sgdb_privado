@@ -14,9 +14,10 @@ alterações em um banco **PostgreSQL 15**. Não há código de aplicação aqui
 DML de configuração e lógica de banco (triggers, functions, views).
 
 Este repositório nasceu de uma cópia adaptada da estrutura de `adm`/`audit` do Sigein.
-Os demais schemas do Sigein (`comum`, `patrim`, `integracao`, `invent`, `pncp`) **não**
-foram copiados — só existem aqui se e quando um módulo equivalente para empresas privadas
-for desenvolvido.
+Os demais schemas do Sigein (`comum`, `patrim`, `integracao`, `invent`) **não** foram
+copiados — só existem aqui se e quando um módulo equivalente para empresas privadas for
+desenvolvido. `pncp` e `radar` foram criados aqui para o Radar de Licitações (ver
+"Arquitetura de schemas").
 
 ---
 
@@ -80,10 +81,14 @@ criar um novo.
 | Schema | Finalidade |
 |---|---|
 | `adm` | Administração: usuários, contas, módulos, menus, grupos de permissões, tokens, consultas, relatórios |
-| `audit` | Espelho de auditoria de todas as tabelas de negócio de `adm`, mais `audit.log_acessos` |
+| `audit` | Espelho de auditoria de todas as tabelas de negócio (`audit.{schema}_{tabela}`), mais `audit.log_acessos` |
+| `pncp` | Espelho global dos dados públicos de contratações (PNCP e Comprasnet): órgãos, unidades, contratações, itens, resultados, arquivos, mensagens. Sem divisão por conta/empresa e sem regra de negócio |
+| `radar` | Tabelas de negócio do Radar de Licitações (módulo 97): empresas, boletins, notificações, preferências, alertas. Audit em `audit.radar_*` |
 
-Novos schemas de módulo (equivalentes a `patrim`/`comum`/etc do Sigein) entram aqui
-somente quando um produto para empresas privadas precisar deles — não antecipar.
+Tabela nova do Radar de Licitações vai em `radar`, nunca em `pncp` — `pncp` recebe só
+espelho de fonte pública, global. Novos schemas de módulo (equivalentes a
+`patrim`/`comum`/etc do Sigein) entram aqui somente quando um produto para empresas
+privadas precisar deles — não antecipar.
 
 ---
 
